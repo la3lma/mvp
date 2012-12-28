@@ -1,4 +1,4 @@
-package no.rmz.blobeeproto.api.proto;
+package no.rmz.mvp.api.proto;
 option optimize_for = SPEED;
 
 message RpcParam {
