@@ -1,0 +1,15 @@
+package no.rmz.blobeeproto.api.proto;
+option optimize_for = SPEED;
+
+message RpcParam {
+	 required string parameter = 1;
+}
+
+message RpcResult {
+	 required string returnvalue = 1;
+}
+
+
+service RpcService {
+  rpc Invoke (RpcParam) returns (RpcResult);
+}
