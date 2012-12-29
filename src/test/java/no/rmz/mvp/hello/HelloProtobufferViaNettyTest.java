@@ -8,13 +8,11 @@ import java.util.logging.Logger;
 import no.rmz.mvp.api.proto.Rpc;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.bootstrap.ServerBootstrap;
-import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.ChannelStateEvent;
-import org.jboss.netty.channel.Channels;
 import static org.jboss.netty.channel.Channels.pipeline;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
@@ -44,35 +42,44 @@ public final class HelloProtobufferViaNettyTest {
 
     private static final Logger log = Logger.getLogger(
             no.rmz.mvp.hello.HelloProtobufferViaNettyTest.class.getName());
-    private final static String PARAMETER_STRING = "Hello world";
+    private final static String PARAMETER_STRING = "Hello server";
+    private final static String RETURNVALUE_STRING = "Hello client";
+
     private final static int PORT = 7171;
     private final static String HOST = "localhost";
     private final static int FIRST_MESSAGE_SIZE = 256;
 
     // We need an interface to receive something into a mock
     // and this is it.
-    public interface Receiver {
-        public void receive(final Rpc.RpcParam param);
+    public interface Receiver<T> {
+        public void receive(final T param);
     }
     // This is the receptacle for the message that goes
     // over the wire.
     @Mock
-    Receiver receiver;
+    Receiver<Rpc.RpcParam> serverReceiver;
+
+    @Mock
+    Receiver<Rpc.RpcResult> clientReceiver;
     /**
      * The message we are going to send through the wire and hopefully pick up
      * again on the other side.
      */
     private Rpc.RpcParam sampleRpcMessage;
 
+
+    private Rpc.RpcResult sampleResultMessage;
+
     @Before
     public void setUp() {
-        sampleRpcMessage = Rpc.RpcParam.newBuilder().setParameter(PARAMETER_STRING).build();
+        sampleRpcMessage =
+                Rpc.RpcParam.newBuilder().setParameter(PARAMETER_STRING).build();
+        sampleResultMessage  =
+                Rpc.RpcResult.newBuilder().setReturnvalue(RETURNVALUE_STRING).build();
         setUpServer();
-
     }
 
     public final class RpcServerHandler extends SimpleChannelUpstreamHandler {
-
 
         @Override
         public void messageReceived(
@@ -81,13 +88,12 @@ public final class HelloProtobufferViaNettyTest {
 
             log.info("Received message " + message);
 
-            // Now if the pipeline works, we'll just cast the incoming
-            // message to the appropriate valye and send it on to
-            // the receiver.
             final Rpc.RpcParam msg = (Rpc.RpcParam) e.getMessage();
-            receiver.receive(msg);
+            serverReceiver.receive(msg);
 
-            // Since we're done now, we can just close
+            // Now, to be polite we send a reply back down the same channel :-)
+            e.getChannel().write(sampleResultMessage);
+            // And then we close the whole thing since we're done.
             e.getChannel().close();
         }
 
@@ -121,7 +127,11 @@ public final class HelloProtobufferViaNettyTest {
         @Override
         public void messageReceived(
                 final ChannelHandlerContext ctx, final MessageEvent e) {
-            fail();
+            final Object message = e.getMessage();
+             log.info("The client received message object : " + message);
+            final Rpc.RpcResult result = (Rpc.RpcResult) e.getMessage();
+            log.info("The client received result: " + result);
+            clientReceiver.receive(result);
         }
 
         @Override
@@ -184,7 +194,7 @@ public final class HelloProtobufferViaNettyTest {
                 final ChannelPipeline p = pipeline();
                 p.addLast("frameDecoder", new ProtobufVarint32FrameDecoder());
                 p.addLast("protobufDecoder",
-                        new ProtobufDecoder(Rpc.RpcParam.getDefaultInstance()));
+                        new ProtobufDecoder(Rpc.RpcResult.getDefaultInstance()));
                 p.addLast("frameEncoder", new ProtobufVarint32LengthFieldPrepender());
                 p.addLast("protobufEncoder", new ProtobufEncoder());
                 p.addLast("handler", new RpcClientHandler(msgToSend));
@@ -212,6 +222,7 @@ public final class HelloProtobufferViaNettyTest {
         setUpClient(sampleRpcMessage);
         // Then verify that it got through.  Should be simple
         // enough?
-        verify(receiver).receive(sampleRpcMessage);
+        verify(serverReceiver).receive(sampleRpcMessage);
+        verify(clientReceiver).receive(sampleResultMessage);
     }
 }
