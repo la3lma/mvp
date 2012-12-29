@@ -2,7 +2,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>no.rmz</groupId>
-    <artifactId>blobeeproto</artifactId>
+    <artifactId>mvp</artifactId>
     <packaging>jar</packaging>
     <version>1.0-SNAPSHOT</version>
     <name>mvp</name>
@@ -13,8 +13,13 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <compileSource>1.7</compileSource>
         <compileTarget>1.7</compileTarget>
+        <mockito.version>1.9.5-rc1</mockito.version>
+        <findbugs.version>1.3.2</findbugs.version>
+        <junit.version>4.11</junit.version>
+        <guava.version>13.0.1</guava.version>
+        <protobuf.version>2.3.0</protobuf.version>
+        <netty.version>3.4.4.Final</netty.version>
     </properties>
-
 
     <developers>
         <developer>
@@ -26,7 +31,7 @@
 
 
     <!-- Profiles used to determine which protoc compiler binary we need to
-        use -->
+    use -->
     <profiles>
         <profile>
             <id>profile-protoc-mac-x86_64</id>
@@ -149,12 +154,12 @@
                     </execution>
                 </executions>
             </plugin>
-	</plugins>
+        </plugins>
 
         <pluginManagement>
             <plugins>
                 <!--This plugin's configuration is used to store Eclipse m2e settings
-                    only. It has no influence on the Maven build itself. -->
+                only. It has no influence on the Maven build itself. -->
                 <plugin>
                     <groupId>org.eclipse.m2e</groupId>
                     <artifactId>lifecycle-mapping</artifactId>
@@ -188,16 +193,43 @@
 
         <dependency>
             <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-all</artifactId>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty</artifactId>
+            <version>${netty.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
             <artifactId>junit-dep</artifactId>
-            <version>4.10</version>
+            <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
-            <version>2.3.0</version>
+            <version>${protobuf.version}</version>
         </dependency>
+
+           <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${guava.version}</version>
+        </dependency>
+
 
     </dependencies>
 
